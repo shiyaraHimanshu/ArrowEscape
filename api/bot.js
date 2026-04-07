@@ -1,14 +1,11 @@
 const TelegramBot = require('node-telegram-bot-api');
 
-// ✅ Create bot (Webhook mode for Vercel)
 const bot = new TelegramBot(process.env.TOKEN, {
     webHook: true
 });
 
-// 🧠 Temporary user store (resets on deploy)
 let users = {};
 
-// 🎮 Send Play UI
 async function sendPlayMessage(chatId) {
     await bot.sendMessage(chatId, `
 🎮 Arrow Escape
@@ -38,56 +35,34 @@ async function sendPlayMessage(chatId) {
     });
 }
 
-// 🚀 Vercel Serverless Function
 module.exports = async (req, res) => {
 
-    if (req.method === 'POST') {
+    try {
+        if (req.method === 'POST') {
 
-        // ✅ Safe body parsing (important for Vercel)
-        const update = typeof req.body === "string"
-            ? JSON.parse(req.body)
-            : req.body;
+            const update = req.body;
 
-        if (update.message) {
-            const msg = update.message;
-            const chatId = msg.chat.id;
-            const text = msg.text || "";
+            console.log("Incoming update:", update); // 🔥 debug log
 
-            // 👤 Save user
-            if (!users[chatId]) {
-                users[chatId] = {
-                    id: chatId,
-                    invitedBy: null
-                };
-            }
+            if (update.message) {
+                const msg = update.message;
+                const chatId = msg.chat.id;
+                const text = msg.text || "";
 
-            // 🎯 Handle /start command
-            if (text.startsWith('/start')) {
-
-                const parts = text.split(' ');
-                const param = parts[1];
-
-                // 🎁 Referral system
-                if (param && param.startsWith('ref_')) {
-                    const refId = param.split('_')[1];
-
-                    if (refId && refId != chatId) {
-                        users[chatId].invitedBy = refId;
-
-                        try {
-                            await bot.sendMessage(refId, `🎉 You invited a new player!`);
-                        } catch (e) {
-                            console.log("Invalid refId");
-                        }
-                    }
+                if (!users[chatId]) {
+                    users[chatId] = { id: chatId };
                 }
 
-                // 🎮 Send Play Button UI
-                await sendPlayMessage(chatId);
+                if (text.startsWith('/start')) {
+                    await sendPlayMessage(chatId);
+                }
             }
         }
-    }
 
-    // ✅ Required response for Telegram
-    res.status(200).send('OK');
+        res.status(200).send('OK');
+
+    } catch (error) {
+        console.log("ERROR:", error);
+        res.status(200).send('ERROR');
+    }
 };
