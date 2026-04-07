@@ -26,8 +26,10 @@ async function sendPlayMessage(chatId) {
                 ],
                 [
                     {
-                        text: "📢 Share Game",
-                        url: `https://t.me/ArrowEscape_bot?start=ref_${chatId}`
+                       {
+    text: "📢 Share Game",
+    url: `https://t.me/share/url?url=https://t.me/ArrowEscape_bot?start=ref_${chatId}&text=🎮 Play Arrow Escape and challenge your brain!`
+}
                     }
                 ]
             ]
