@@ -1,8 +1,11 @@
-﻿const TelegramBot = require('node-telegram-bot-api');
+const TelegramBot = require('node-telegram-bot-api');
 
-const bot = new TelegramBot(process.env.TOKEN);
+// ✅ Create bot (Webhook mode for Vercel)
+const bot = new TelegramBot(process.env.TOKEN, {
+    webHook: true
+});
 
-// 🧠 In-memory user store (temporary)
+// 🧠 Temporary user store (resets on deploy)
 let users = {};
 
 // 🎮 Send Play UI
@@ -35,11 +38,15 @@ async function sendPlayMessage(chatId) {
     });
 }
 
-// 🎯 Handle incoming updates
+// 🚀 Vercel Serverless Function
 module.exports = async (req, res) => {
 
     if (req.method === 'POST') {
-        const update = req.body;
+
+        // ✅ Safe body parsing (important for Vercel)
+        const update = typeof req.body === "string"
+            ? JSON.parse(req.body)
+            : req.body;
 
         if (update.message) {
             const msg = update.message;
@@ -54,28 +61,33 @@ module.exports = async (req, res) => {
                 };
             }
 
-            // 🚀 Handle /start with params
+            // 🎯 Handle /start command
             if (text.startsWith('/start')) {
 
                 const parts = text.split(' ');
                 const param = parts[1];
 
-                // 🎯 Referral logic
+                // 🎁 Referral system
                 if (param && param.startsWith('ref_')) {
                     const refId = param.split('_')[1];
 
                     if (refId && refId != chatId) {
                         users[chatId].invitedBy = refId;
 
-                        // 🎁 Reward message (basic)
-                        await bot.sendMessage(refId, `🎉 You invited a new player!`);
+                        try {
+                            await bot.sendMessage(refId, `🎉 You invited a new player!`);
+                        } catch (e) {
+                            console.log("Invalid refId");
+                        }
                     }
                 }
 
+                // 🎮 Send Play Button UI
                 await sendPlayMessage(chatId);
             }
         }
     }
 
+    // ✅ Required response for Telegram
     res.status(200).send('OK');
 };
