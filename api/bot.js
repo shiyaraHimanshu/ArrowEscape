@@ -1,14 +1,13 @@
 ﻿const TelegramBot = require('node-telegram-bot-api');
 
-// 🔑 Your bot token
-const token = "8320931168:AAFkO8jalJu-zVGCBbj7W8P7ICLXPocnrmo";
+const bot = new TelegramBot(process.env.TOKEN);
 
-// 🤖 Create bot
-const bot = new TelegramBot(token, { polling: true });
+// 🧠 In-memory user store (temporary)
+let users = {};
 
-// 🎮 Common function to send Play UI
-function sendPlayMessage(chatId) {
-    bot.sendMessage(chatId, `
+// 🎮 Send Play UI
+async function sendPlayMessage(chatId) {
+    await bot.sendMessage(chatId, `
 🎮 Arrow Escape
 
 🧠 Challenge your brain with tricky puzzles!
@@ -28,7 +27,7 @@ function sendPlayMessage(chatId) {
                 [
                     {
                         text: "📢 Share Game",
-                        switch_inline_query: "Play Arrow Escape 🎮"
+                        url: `https://t.me/ArrowEscape_bot?start=ref_${chatId}`
                     }
                 ]
             ]
@@ -36,20 +35,47 @@ function sendPlayMessage(chatId) {
     });
 }
 
-// ✅ Handle normal /start
-bot.onText(/\/start$/, (msg) => {
-    sendPlayMessage(msg.chat.id);
-});
+// 🎯 Handle incoming updates
+module.exports = async (req, res) => {
 
-// ✅ Handle deep link /start play (auto trigger)
-bot.onText(/\/start (.+)/, (msg, match) => {
+    if (req.method === 'POST') {
+        const update = req.body;
 
-    const chatId = msg.chat.id;
-    const param = match[1];
+        if (update.message) {
+            const msg = update.message;
+            const chatId = msg.chat.id;
+            const text = msg.text || "";
 
-    if (param === "play") {
-        sendPlayMessage(chatId);
-    } else {
-        sendPlayMessage(chatId);
+            // 👤 Save user
+            if (!users[chatId]) {
+                users[chatId] = {
+                    id: chatId,
+                    invitedBy: null
+                };
+            }
+
+            // 🚀 Handle /start with params
+            if (text.startsWith('/start')) {
+
+                const parts = text.split(' ');
+                const param = parts[1];
+
+                // 🎯 Referral logic
+                if (param && param.startsWith('ref_')) {
+                    const refId = param.split('_')[1];
+
+                    if (refId && refId != chatId) {
+                        users[chatId].invitedBy = refId;
+
+                        // 🎁 Reward message (basic)
+                        await bot.sendMessage(refId, `🎉 You invited a new player!`);
+                    }
+                }
+
+                await sendPlayMessage(chatId);
+            }
+        }
     }
-});
+
+    res.status(200).send('OK');
+};
