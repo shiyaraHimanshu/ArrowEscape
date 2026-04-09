@@ -55,7 +55,7 @@ Test your logic in a smooth and addictive arrow puzzle challenge.
                     [
                         {
                             text: "🛟 SUPPORT",
-                            url: "https://t.me/ArrowEscape_bot"
+                            url: "https://t.me/ArrowEscape_Support"
                         }
                     ]
                 ]
