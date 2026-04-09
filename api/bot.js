@@ -49,7 +49,7 @@ Test your logic in a smooth and addictive arrow puzzle challenge.
                         },
                         {
                             text: "📣 SHARE GAME",
-                            url: `https://t.me/ArrowEscape_bot?start=ref_${chatId}`
+                            url: `https://t.me/share/url?url=https://t.me/ArrowEscape_bot?start=ref_${chatId}&text=🎮%20Play%20Arrow%20Escape!%20Can%20you%20clear%20all%20arrows%20without%20crashing%3F`
                         }
                     ],
                     [
