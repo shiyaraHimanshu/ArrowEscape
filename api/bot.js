@@ -51,7 +51,7 @@ Test your logic with smooth and addictive arrow puzzles.
                     [
                         {
                             text: "🛟 SUPPORT",
-                            url: "https://t.me/ArrowEscape_bot"
+                            url: "https://t.me/HimanshuShiyara"
                         }
                     ]
                 ]
