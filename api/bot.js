@@ -12,17 +12,21 @@ async function sendPlayMessage(chatId) {
         `
 🧠 Welcome to Arrow Escape!
 
-Test your logic with smooth and addictive arrow puzzles.
+Test your logic in a smooth and addictive arrow puzzle challenge.
 
-🎯 How it works:
-• Swipe arrows in the right direction
-• Clear paths without blocking
-• Complete levels to progress
+🎯 How to play:
+• Tap an arrow to launch it
+• It moves forward until it exits the board
+• If it hits another arrow, you lose a life
+• Clear all arrows to complete the level
+
+❤️ You have 3 lives per session
+📈 Each level gets harder as you progress
 
 ✨ Why players love it:
-• Relaxing gameplay
+• Simple and satisfying gameplay
 • Smart brain challenges
-• Hundreds of levels
+• Smooth neon visuals
 • Instant play in Telegram
 
 👇 Tap below to start playing!
@@ -45,13 +49,13 @@ Test your logic with smooth and addictive arrow puzzles.
                         },
                         {
                             text: "📣 SHARE GAME",
-                            url: `https://t.me/share/url?url=${encodeURIComponent(`https://t.me/ArrowEscape_bot?start=ref_${chatId}`)}&text=${encodeURIComponent("Try Arrow Escape - an addictive puzzle game on Telegram!")}`
+                            url: `https://t.me/ArrowEscape_bot?start=ref_${chatId}`
                         }
                     ],
                     [
                         {
                             text: "🛟 SUPPORT",
-                            url: "https://t.me/HimanshuShiyara"
+                            url: "https://t.me/ArrowEscape_bot"
                         }
                     ]
                 ]
@@ -77,11 +81,13 @@ module.exports = async (req, res) => {
                         `
 📘 How to Play
 
-• Swipe arrows to move them
-• Avoid blocking paths
-• Clear all arrows to finish level
+• Tap an arrow to launch it
+• It moves forward automatically
+• Avoid hitting other arrows
+• Clear all arrows to finish the level
 
-💡 Plan your moves carefully and solve each puzzle!
+❤️ You have 3 lives per session
+💡 Plan carefully and clear the board!
 `
                     );
                 }
