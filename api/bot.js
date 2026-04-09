@@ -1,61 +1,93 @@
 const TelegramBot = require('node-telegram-bot-api');
 
-// ✅ Create bot (Webhook mode for Vercel)
-const bot = new TelegramBot(process.env.TOKEN, {
-    webHook: true
-});
+const bot = new TelegramBot(process.env.TOKEN);
 
-// 🧠 Temporary user store (resets on deploy)
+// 🧠 In-memory user store (temporary)
 let users = {};
 
-// 🎮 Send Play UI
+// 🎮 Premium welcome / play UI
 async function sendPlayMessage(chatId) {
-    await bot.sendMessage(chatId, `
-🎮 Arrow Escape
+    await bot.sendMessage(
+        chatId,
+        `
+🧠 Welcome to Arrow Escape!
 
-🧠 Challenge your brain with tricky puzzles!
+Test your logic with smooth and addictive arrow puzzles.
 
-👇 Tap below to play!
-`, {
-        reply_markup: {
-            inline_keyboard: [
-                [
-                    {
-                        text: "🚀 PLAY NOW",
-                        web_app: {
-                            url: "https://arrow-escape-nine.vercel.app"
+🎯 How it works:
+• Swipe arrows in the right direction
+• Clear paths without blocking
+• Complete levels to progress
+
+✨ Why players love it:
+• Relaxing gameplay
+• Smart brain challenges
+• Hundreds of levels
+• Instant play in Telegram
+
+👇 Tap below to start playing!
+`,
+        {
+            reply_markup: {
+                inline_keyboard: [
+                    [
+                        {
+                            text: "🚀 PLAY NOW",
+                            web_app: {
+                                url: "https://arrow-escape-nine.vercel.app"
+                            }
                         }
-                    }
-                ],
-                [
-                    {
-                        text: "📢 Share Game",
-                        url: `https://t.me/share/url?url=https://t.me/ArrowEscape_bot?start=ref_${chatId}&text=🎮 Play Arrow Escape and challenge your brain!`
-                    }
+                    ],
+                    [
+                        {
+                            text: "📘 HOW TO PLAY",
+                            callback_data: "how_to_play"
+                        },
+                        {
+                            text: "📣 SHARE GAME",
+                            url: `https://t.me/ArrowEscape_bot?start=ref_${chatId}`
+                        }
+                    ],
+                    [
+                        {
+                            text: "🛟 SUPPORT",
+                            url: "https://t.me/ArrowEscape_bot"
+                        }
+                    ]
                 ]
-            ]
+            }
         }
-    });
+    );
 }
 
-// 🚀 Vercel Serverless Function
+// 🎯 Handle Telegram webhook updates
 module.exports = async (req, res) => {
-
-    // ✅ Allow GET (so browser shows OK)
-    if (req.method === 'GET') {
-        return res.status(200).send("OK");
-    }
-
     try {
         if (req.method === 'POST') {
+            const update = req.body;
 
-            // ✅ Safe body parsing
-            const update = typeof req.body === "string"
-                ? JSON.parse(req.body)
-                : req.body;
+            // 📘 Handle button clicks
+            if (update.callback_query) {
+                const query = update.callback_query;
+                const chatId = query.message.chat.id;
 
-            console.log("Incoming update:", update);
+                if (query.data === "how_to_play") {
+                    await bot.sendMessage(
+                        chatId,
+                        `
+📘 How to Play
 
+• Swipe arrows to move them
+• Avoid blocking paths
+• Clear all arrows to finish level
+
+💡 Plan your moves carefully and solve each puzzle!
+`
+                    );
+                }
+            }
+
+            // 💬 Handle normal messages
             if (update.message) {
                 const msg = update.message;
                 const chatId = msg.chat.id;
@@ -69,9 +101,8 @@ module.exports = async (req, res) => {
                     };
                 }
 
-                // 🎯 Handle /start
+                // 🚀 Handle /start
                 if (text.startsWith('/start')) {
-
                     const parts = text.split(' ');
                     const param = parts[1];
 
@@ -83,23 +114,24 @@ module.exports = async (req, res) => {
                             users[chatId].invitedBy = refId;
 
                             try {
-                                await bot.sendMessage(refId, `🎉 You invited a new player!`);
-                            } catch (e) {
-                                console.log("Invalid refId");
+                                await bot.sendMessage(
+                                    refId,
+                                    `🎉 You invited a new player to Arrow Escape!`
+                                );
+                            } catch (err) {
+                                console.log("Referral notify failed:", err.message);
                             }
                         }
                     }
 
-                    // 🎮 Send UI
                     await sendPlayMessage(chatId);
                 }
             }
         }
 
-        res.status(200).send("OK");
-
+        res.status(200).send('OK');
     } catch (error) {
-        console.log("ERROR:", error);
-        res.status(200).send("ERROR");
+        console.error("Bot Error:", error);
+        res.status(200).send('OK');
     }
 };
