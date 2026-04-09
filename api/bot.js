@@ -45,7 +45,7 @@ Test your logic with smooth and addictive arrow puzzles.
                         },
                         {
                             text: "📣 SHARE GAME",
-                            url: `https://t.me/ArrowEscape_bot?start=ref_${chatId}`
+                            url: `https://t.me/share/url?url=${encodeURIComponent(`https://t.me/ArrowEscape_bot?start=ref_${chatId}`)}&text=${encodeURIComponent("Try Arrow Escape - an addictive puzzle game on Telegram!")}`
                         }
                     ],
                     [
