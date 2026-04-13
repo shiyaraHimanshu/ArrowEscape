@@ -1,18 +1,26 @@
 const TelegramBot = require('node-telegram-bot-api');
 
-// Initialize the bot with your token
-const bot = new TelegramBot(process.env.TOKEN);
+/**
+ * 📡 Arrow Escape - Telegram Bot Backend (Vercel Serverless Version)
+ * Fixes: CORS headers, Pre-flight handling, and Enhanced Error Logging
+ */
 
-// 🧠 In-memory user store (temporary)
+// 🔐 Securely initialize the bot with your token
+// Ensure TOKEN is set in your Vercel Environment Variables
+const TOKEN = process.env.TOKEN;
+const bot = new TelegramBot(TOKEN, { polling: false });
+
+// 🧠 In-memory user store (reset on function sleep - use DB like Redis for production)
 let users = {};
 
 /**
  * Sends the premium welcome/play UI to the user.
  */
 async function sendPlayMessage(chatId) {
-    await bot.sendMessage(
-        chatId,
-        `
+    try {
+        await bot.sendMessage(
+            chatId,
+            `
 🧠 Welcome to Arrow Escape!
 
 Test your logic with smooth and addictive arrow puzzles.
@@ -30,87 +38,114 @@ Test your logic with smooth and addictive arrow puzzles.
 
 👇 Tap below to start playing!
 `,
-        {
-            reply_markup: {
-                inline_keyboard: [
-                    [
-                        {
-                            text: "🚀 PLAY NOW",
-                            web_app: {
-                                url: "https://arrow-escape-nine.vercel.app"
+            {
+                reply_markup: {
+                    inline_keyboard: [
+                        [
+                            {
+                                text: "🚀 PLAY NOW",
+                                web_app: {
+                                    url: "https://arrow-escape-nine.vercel.app"
+                                }
                             }
-                        }
-                    ],
-                    [
-                        {
-                            text: "📘 HOW TO PLAY",
-                            callback_data: "how_to_play"
-                        },
-                        {
-                            text: "📣 SHARE GAME",
-                            url: `https://t.me/share/url?url=https://t.me/ArrowEscape_bot?start=ref_${chatId}&text=🎮%20Play%20Arrow%20Escape!%20Can%20you%20clear%20all%20arrows%20without%20crashing%3F`
-                        }
-                    ],
-                    [
-                        {
-                            text: "🛟 SUPPORT",
-                            url: "https://t.me/ArrowEscape_bot"
-                        }
+                        ],
+                        [
+                            {
+                                text: "📘 HOW TO PLAY",
+                                callback_data: "how_to_play"
+                            },
+                            {
+                                text: "📣 SHARE GAME",
+                                url: `https://t.me/share/url?url=https://t.me/ArrowEscape_bot?start=ref_${chatId}&text=🎮%20Play%20Arrow%20Escape!%20Can%20you%20clear%20all%20arrows%20without%20crashing%3F`
+                            }
+                        ],
+                        [
+                            {
+                                text: "🛟 SUPPORT",
+                                url: "https://t.me/ArrowEscape_bot"
+                            }
+                        ]
                     ]
-                ]
+                }
             }
-        }
-    );
+        );
+    } catch (e) {
+        console.error("sendPlayMessage Error:", e.message);
+    }
 }
 
 /**
- * 🎯 Handle Telegram webhook updates and Invoice creation requests.
- * This is designed for deployment as a Vercel Serverless Function (api/bot.js).
+ * 🎯 Main Entry Point for Vercel Serverless Function
  */
 module.exports = async (req, res) => {
+    // --- 🛡️ APPLY CORS HEADERS (Crucial for WebGL browser fetch) ---
+    res.setHeader('Access-Control-Allow-Origin', '*'); 
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+
+    // Handle Browser Pre-flight (OPTIONS)
+    if (req.method === 'OPTIONS') {
+        return res.status(200).end();
+    }
+
     try {
-        // --- 💎 REAL PAYMENT INTEGRATION (STARS) ---
-        
-        // Handle Invoice creation (GET request from Game Client)
-        if (req && req.query && req.query.action === 'createInvoice') {
+        // 1. Handle Invoice creation requests (GET) from Unity WebGL
+        if (req.method === 'GET' && req.query.action === 'createInvoice') {
             const chatId = req.query.chatId;
 
             if (!chatId) {
                 return res.status(400).json({ error: "Missing chatId" });
             }
 
-            // Create a real Telegram Stars invoice link
-            const invoiceLink = await bot.createInvoiceLink(
-                "Agent Booster",                   // Title
-                "Clears up to 10 arrows in-game",   // Description
-                "booster_agent_v1",                 // Payload 
-                "",                                // Provider token (Empty for Stars)
-                "XTR",                             // Currency (Stars)
-                [{ label: "Agent Booster", amount: 10 }] // Price: 10 Stars
-            );
+            console.log(`[PAYMENT] Creating Stars invoice for: ${chatId}`);
 
-            return res.status(200).json({ invoiceLink: invoiceLink });
+            try {
+                // Create a real Telegram Stars invoice link (XTR = Stars)
+                const invoiceLink = await bot.createInvoiceLink(
+                    "Agent Booster",                   // Title
+                    "Clears up to 10 arrows in-game",   // Description
+                    "booster_agent_v1",                 // Payload 
+                    "",                                // Provider token (Empty for Stars)
+                    "XTR",                             // Currency (Stars)
+                    [{ label: "Agent Booster", amount: 10 }] // Price: 10 Stars
+                );
+
+                console.log(`[PAYMENT] Link created: ${invoiceLink}`);
+                return res.status(200).json({ invoiceLink: invoiceLink });
+            } catch (invoiceError) {
+                console.error("[PAYMENT] createInvoiceLink failed:", invoiceError.message);
+                return res.status(500).json({ error: "Bot failed to create invoice", details: invoiceError.message });
+            }
         }
 
-        // Handle POST updates from Telegram Webhook
+        // 2. Handle POST updates (Webhooks) from Telegram Servers
         if (req.method === 'POST') {
             const update = req.body;
+            if (!update) return res.status(200).send('OK');
 
-            // 1. Handle Mandatory Pre-Checkout Query for Payments
+            // --- 💎 HANDLE PAYMENTS ---
+
+            // A. Mandatory Pre-Checkout Query
             if (update.pre_checkout_query) {
-                // Must answer within 10 seconds to authorize payment
+                console.log(`[PAYMENT] Pre-checkout for: ${update.pre_checkout_query.id}`);
                 await bot.answerPreCheckoutQuery(update.pre_checkout_query.id, true);
                 return res.status(200).send('OK');
             }
 
-            // 2. Handle Successful Payment Notification
+            // B. Successful Payment Confirmation
             if (update.message && update.message.successful_payment) {
                 const chatId = update.message.chat.id;
-                await bot.sendMessage(chatId, "✅ Thank you! Your Agent Booster has been added to your account. Go back to the game and play!");
+                console.log(`[PAYMENT] Success by: ${chatId}`);
+                await bot.sendMessage(
+                    chatId, 
+                    "✅ Thank you! Your Agent Booster has been added. Return to the game and play!"
+                );
                 return res.status(200).send('OK');
             }
 
-            // 3. Handle Button Clicks (callback_query)
+            // --- ⚙️ HANDLE NORMAL BOT INTERACTIONS ---
+
+            // C. Button Callbacks
             if (update.callback_query) {
                 const query = update.callback_query;
                 const chatId = query.message.chat.id;
@@ -118,64 +153,44 @@ module.exports = async (req, res) => {
                 if (query.data === "how_to_play") {
                     await bot.sendMessage(
                         chatId,
-                        `
-📘 How to Play
-
-• Swipe arrows to move them
-• Avoid blocking paths
-• Clear all arrows to finish level
-
-💡 Plan your moves carefully and solve each puzzle!
-`
+                        `📘 How to Play\n\n• Swipe arrows to move them\n• Avoid blocking paths\n• Clear all arrows to finish level\n\n💡 Plan your moves carefully!`
                     );
                 }
+                return res.status(200).send('OK');
             }
 
-            // 4. Handle Text Messages (/start, referrals)
+            // D. Text Messages & Referrals
             if (update.message) {
                 const msg = update.message;
                 const chatId = msg.chat.id;
                 const text = msg.text || "";
 
-                // Register user
-                if (!users[chatId]) {
-                    users[chatId] = {
-                        id: chatId,
-                        invitedBy: null
-                    };
-                }
-
-                // Handle /start command
                 if (text.startsWith('/start')) {
                     const parts = text.split(' ');
                     const param = parts[1];
 
-                    // Referral logic
+                    // Referral tracking
                     if (param && param.startsWith('ref_')) {
                         const refId = param.split('_')[1];
-
                         if (refId && refId != chatId) {
-                            users[chatId].invitedBy = refId;
                             try {
-                                await bot.sendMessage(
-                                    refId,
-                                    `🎉 You invited a new player to Arrow Escape!`
-                                );
-                            } catch (err) {
-                                console.log("Referral notify failed:", err.message);
-                            }
+                                await bot.sendMessage(refId, `🎉 Someone joined via your link!`);
+                            } catch (e) {}
                         }
                     }
 
                     await sendPlayMessage(chatId);
+                    return res.status(200).send('OK');
                 }
             }
         }
 
+        // Catch-all 200 for Telegram
         res.status(200).send('OK');
     } catch (error) {
-        console.error("Critical Backend Error:", error);
-        // Always return 200 to Telegram so it doesn't retry infinitely on error
+        console.error("🔥 Bot Error:", error);
+        // Always return 200 so Telegram doesn't retry infinitely
         res.status(200).send('OK');
     }
 };
+
