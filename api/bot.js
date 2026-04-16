@@ -61,8 +61,12 @@ Test your logic with smooth and addictive arrow puzzles.
                         ],
                         [
                             {
-                                text: "🛟 SUPPORT",
-                                url: "https://t.me/ArrowEscape_bot"
+                                text: "🆘 HELP & SUPPORT",
+                                url: "https://t.me/shiyaraHimanshu"
+                            },
+                            {
+                                text: "📢 JOIN CHANNEL",
+                                url: "https://t.me/+5zCefb50DdphZWJl"
                             }
                         ]
                     ]
@@ -182,6 +186,15 @@ module.exports = async (req, res) => {
                     await sendPlayMessage(chatId);
                     return res.status(200).send('OK');
                 }
+
+                // E. Handle /help command
+                if (text.startsWith('/help')) {
+                    await bot.sendMessage(
+                        chatId,
+                        "🆘 Need help? You can contact our support team here: https://t.me/shiyaraHimanshu"
+                    );
+                    return res.status(200).send('OK');
+                }
             }
         }
 
@@ -193,4 +206,3 @@ module.exports = async (req, res) => {
         res.status(200).send('OK');
     }
 };
-
