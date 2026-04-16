@@ -162,7 +162,7 @@ module.exports = async (req, res) => {
                 } else if (query.data === "support_info") {
                     await bot.sendMessage(
                         chatId,
-                        `🆘 Help & Support\n\nFor any issues or inquiries, please contact us at:\n📧 Email: undercitygame.com\n\nOur team is available to assist you with gameplay, technical issues, or feedback.`
+                        `🆘 Help & Support\n\nFor any issues or inquiries, please contact us at:\n📧 Email: undercitygame@gmail.com\n\nOur team is available to assist you with gameplay, technical issues, or feedback.`
                     );
                 }
 
