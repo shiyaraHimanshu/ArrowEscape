@@ -83,7 +83,7 @@ Test your logic with smooth and addictive arrow puzzles.
  */
 module.exports = async (req, res) => {
     // --- 🛡️ APPLY CORS HEADERS (Crucial for WebGL browser fetch) ---
-    res.setHeader('Access-Control-Allow-Origin', '*'); 
+    res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
@@ -141,7 +141,7 @@ module.exports = async (req, res) => {
                 const chatId = update.message.chat.id;
                 console.log(`[PAYMENT] Success by: ${chatId}`);
                 await bot.sendMessage(
-                    chatId, 
+                    chatId,
                     "✅ Thank you! Your Agent Booster has been added. Return to the game and play!"
                 );
                 return res.status(200).send('OK');
@@ -165,7 +165,7 @@ module.exports = async (req, res) => {
                         `🆘 Help & Support\n\nFor any issues or inquiries, please contact us at:\n📧 Email: undercitygame.com\n\nOur team is available to assist you with gameplay, technical issues, or feedback.`
                     );
                 }
-                
+
                 await bot.answerCallbackQuery(query.id);
                 return res.status(200).send('OK');
             }
@@ -186,7 +186,7 @@ module.exports = async (req, res) => {
                         if (refId && refId != chatId) {
                             try {
                                 await bot.sendMessage(refId, `🎉 Someone joined via your link!`);
-                            } catch (e) {}
+                            } catch (e) { }
                         }
                     }
 
@@ -198,7 +198,7 @@ module.exports = async (req, res) => {
                 if (text.startsWith('/help')) {
                     await bot.sendMessage(
                         chatId,
-                        "🆘 Help & Support\n\nFor any issues or inquiries, please contact us at:\n📧 Email: undercitygame.com\n\nWe are here to help!"
+                        "🆘 Help & Support\n\nFor any issues or inquiries, please contact us at:\n📧 Email: undercitygame@gmail.com\n\nWe are here to help!"
                     );
                     return res.status(200).send('OK');
                 }
