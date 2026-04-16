@@ -62,7 +62,7 @@ Test your logic with smooth and addictive arrow puzzles.
                         [
                             {
                                 text: "🆘 HELP & SUPPORT",
-                                url: "https://t.me/shiyaraHimanshu"
+                                callback_data: "support_info"
                             },
                             {
                                 text: "📢 JOIN CHANNEL",
@@ -159,7 +159,14 @@ module.exports = async (req, res) => {
                         chatId,
                         `📘 How to Play\n\n• Swipe arrows to move them\n• Avoid blocking paths\n• Clear all arrows to finish level\n\n💡 Plan your moves carefully!`
                     );
+                } else if (query.data === "support_info") {
+                    await bot.sendMessage(
+                        chatId,
+                        `🆘 Help & Support\n\nFor any issues or inquiries, please contact us at:\n📧 Email: undercitygame.com\n\nOur team is available to assist you with gameplay, technical issues, or feedback.`
+                    );
                 }
+                
+                await bot.answerCallbackQuery(query.id);
                 return res.status(200).send('OK');
             }
 
@@ -191,7 +198,7 @@ module.exports = async (req, res) => {
                 if (text.startsWith('/help')) {
                     await bot.sendMessage(
                         chatId,
-                        "🆘 Need help? You can contact our support team here: https://t.me/shiyaraHimanshu"
+                        "🆘 Help & Support\n\nFor any issues or inquiries, please contact us at:\n📧 Email: undercitygame.com\n\nWe are here to help!"
                     );
                     return res.status(200).send('OK');
                 }
